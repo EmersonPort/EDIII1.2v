@@ -8,32 +8,29 @@
 
 //Carla Nunes da Cruz 8479343
 
-void fill_trash(FILE* fp,int n){
+void fill_trash(FILE* fp,int n){// preenche um arquivo com trash n vezes
         for(int i=0;i<n;i++){
             fwrite(trash,sizeof(char),1,fp);
         }
     }
 
 
-int getstr(FILE* file1,char* string){
+void getstr(FILE* file1,char* string){//pega uma string do  aquivo csv
     char c;
     char s[40];
     int i=0;
     fread(&c,sizeof(char),1,file1);
-    while(c!=','){
+    while(c!=','){// a leitura vai ate a virgula
         s[i]=c;
         fread(&c,sizeof(char),1,file1);
         i++;
     }
-    s[i]='|';
-    i++;
     s[i]='\0';
     strncpy(string,s,i+1);
     //printf("%s\n",string);
-    return i;
 }
 
-int potencia(int n,int pot){
+int potencia(int n,int pot){ // retorna n^(pot) com pot um inteiro positivo
     int r=1;
     for(int i=0;i<pot;i++){
         r=r*n;
@@ -41,22 +38,22 @@ int potencia(int n,int pot){
     return r;
 }
 
-int getint(int* p,FILE* file ) {
+int getint(int* p,FILE* file ) { // pega um inteiro de um arquivo csv
     char s[10];
     int i=0;
-    if(fread(&(s[i]),sizeof(char),1,file)!=1) return 0;
+    if(fread(&(s[i]),sizeof(char),1,file)!=1) return 0;// retorna 0 se acabou o arquivo
     while(s[i]!=',' && s[i]!='\r'){
         i++;
-        fread(&(s[i]),sizeof(char),1,file);
+        fread(&(s[i]),sizeof(char),1,file);//leitura de um carac correspodende ao numero
     }
     int r=0;
     for(int j=0;j<i;j++){
-        r= r+ ((int) s[j]- '0')*potencia(10,i-j-1);
-    }
+        r= r+ ((int) s[j]- '0')*potencia(10,i-j-1);//já que os primeiros sao os de maior ordem 
+    }// - '0' para retorna o valor do digito
     
     if (r==0) *p=-1;
     else{ *p=r;}
-    return 1;
+    return 1;// retorna 1 se foi tudo bem
 }
 
 
@@ -66,32 +63,79 @@ void imprime(FILE* file){
 
 }
 
+void insereg(FILE* file,Dados* d,int flag){// insere um registro
+    long int tamanho_nomeEstacao =strlen(d->nomeEstacao);
+    long int tamanho_nomeLinha =strlen(d->nomeLinha);
+    (d->nomeEstacao)[tamanho_nomeEstacao]='|';
+    (d->nomeLinha)[tamanho_nomeLinha]='|';
+    tamanho_nomeEstacao++;
+    tamanho_nomeLinha++;
+    d->tamanhoRegistro=32+ tamanho_nomeEstacao + tamanho_nomeLinha;// 32= 6*4 +8 : (todos os outros ints depois do campo tamanhoRegistr) + (campo proxLista)
+
+    if(flag==0){// flag==0 -> ha limitacao de tamanho
+        int num_lixo;
+        fwrite(&(d->removido),sizeof(char),1,file);
+        fread(&num_lixo,sizeof(int),1,file);
+        fwrite(&(d->proxLista),sizeof(long int),1,file);
+
+        fwrite(&(d->codEstacao),sizeof(int),1,file);
+        fwrite(&(d->codLinha),sizeof(int),1,file);    
+        fwrite(&(d->codProxEstacao),sizeof(int),1,file);    
+        fwrite(&(d->distProxEstacao),sizeof(int),1,file);    
+        fwrite(&(d->codLinhaIntegra),sizeof(int),1,file);    
+        fwrite(&(d->codEstIntegra),sizeof(int),1,file);
+        num_lixo= num_lixo- d->tamanhoRegistro;
+        
+        fwrite(d->nomeEstacao,sizeof(char),tamanho_nomeEstacao,file);
+        fwrite(d->nomeLinha,sizeof(char),tamanho_nomeLinha,file);
+        fill_trash(file,num_lixo); }
+    else{// flag==1 -> n ha limitacao de tamanho
+        fwrite(&(d->removido),sizeof(char),1,file);
+        fwrite(&(d->tamanhoRegistro),sizeof(int),1,file);
+        fwrite(&(d->proxLista),sizeof(long int),1,file);
+        fwrite(&(d->codEstacao),sizeof(int),1,file);
+        fwrite(&(d->codLinha),sizeof(int),1,file);    
+        fwrite(&(d->codProxEstacao),sizeof(int),1,file);    
+        fwrite(&(d->distProxEstacao),sizeof(int),1,file);    
+        fwrite(&(d->codLinhaIntegra),sizeof(int),1,file);    
+        fwrite(&(d->codEstIntegra),sizeof(int),1,file);       
+        fwrite(d->nomeEstacao,sizeof(char),tamanho_nomeEstacao,file);
+        fwrite(d->nomeLinha,sizeof(char),tamanho_nomeLinha,file);
+        
+    }
+
+}
+
+
+
+
+
 void aplicacao1(FILE* file1,FILE* file2){
-    fseek(file1,101,SEEK_SET);
+    fseek(file1,101,SEEK_SET);//posicao em que comeca as iformacoes que serao lidas
     //fseek(file2,17,SEEK_SET);
-    Dados* d = (Dados*) malloc(sizeof(Dados));
+    Dados* d = (Dados*) malloc(sizeof(Dados));// d armazena o registro q sera lido e armazenado
     d->removido='0';
     d->proxLista=-1;
-    Cabecalho ca;
+    Cabecalho ca; 
     ca.status='1';
     ca.topoLista=-1;
     ca.nroEstacoes=0;
     ca.nroParesEstacao=0;
-    fwrite(&(ca.status),sizeof(char),1,file2);
+    fwrite(&(ca.status),sizeof(char),1,file2); //criando o cabecalho do arquivo
     fwrite(&(ca.topoLista),sizeof(long int),1,file2);
     fwrite(&(ca.nroEstacoes),sizeof(int),1,file2);
     fwrite(&(ca.nroParesEstacao),sizeof(int),1,file2);
-    short int vestacoes[1000]={0};
-    char c;
-    while(getint(&(d->codEstacao),file1)==1){
-        printf("%d\n",d->codEstacao);
-        if(vestacoes[d->codEstacao]==0){
+    short int vestacoes[1000]={0};// armazena os numEstacoes setados
+    char c;// carac. que eh usado para pegar o \n
+    while(getint(&(d->codEstacao),file1)==1){// enquanto tiver leitura
+        //printf("%d\n",d->codEstacao);
+        if(vestacoes[d->codEstacao]==0){// se essa estacao n estiver setada , ela fica
             vestacoes[d->codEstacao]=1;
-            ca.nroEstacoes++;}
-        int tamanho_nomeEstacao= getstr(file1,d->nomeEstacao);
+            ca.nroEstacoes++;}// +estacoes , pois ha uma estacao nova
+        getstr(file1,d->nomeEstacao);
         getint(&(d->codLinha),file1);
         //printf("%d\n",d->codLinha);
-        int tamanho_nomeLinha= getstr(file1,d->nomeLinha);
+        getstr(file1,d->nomeLinha);
         getint(&(d->codProxEstacao),file1);
         //printf("%d\n",d->codProxEstacao);
         getint(&(d->distProxEstacao),file1);
@@ -101,23 +145,10 @@ void aplicacao1(FILE* file1,FILE* file2){
         getint(&(d->codEstIntegra),file1);
         //printf("%d\n",d->codEstIntegra);
         fread(&c,sizeof(char),1,file1);
-      
-        d->tamanhoRegistro=32+ tamanho_nomeLinha + tamanho_nomeEstacao;
         if(d->codProxEstacao!=-1) ca.nroParesEstacao++;
-        
-        fwrite(&(d->removido),sizeof(char),1,file2);
-        fwrite(&(d->tamanhoRegistro),sizeof(int),1,file2);
-        fwrite(&(d->proxLista),sizeof(long int),1,file2);
-        fwrite(&(d->codEstacao),sizeof(int),1,file2);
-        fwrite(&(d->codLinha),sizeof(int),1,file2);
-        fwrite(&(d->codProxEstacao),sizeof(int),1,file2);
-        fwrite(&(d->distProxEstacao),sizeof(int),1,file2);
-        fwrite(&(d->codLinhaIntegra),sizeof(int),1,file2);
-        fwrite(&(d->codEstIntegra),sizeof(int),1,file2);
-        fwrite(d->nomeEstacao,sizeof(char),tamanho_nomeEstacao,file2);
-        fwrite(d->nomeLinha,sizeof(char),tamanho_nomeLinha,file2);}
+        insereg(file2,d,1);}//insere registro sem limitacao de espaco}
 
-    fseek(file2,0,SEEK_SET);
+    fseek(file2,0,SEEK_SET);//voltamos para atualizar o cabecalho 
     ca.status='0';
     fwrite(&(ca.status),sizeof(char),1,file2);
     fwrite(&(ca.topoLista),sizeof(long int),1,file2);
@@ -335,48 +366,7 @@ void aplicacao4(FILE* file){
 }
 
 
-void insereg(FILE* file,Dados* d,int flag){
-    long int tamanho_nomeEstacao =strlen(d->nomeEstacao);
-    long int tamanho_nomeLinha =strlen(d->nomeLinha);
-    (d->nomeEstacao)[tamanho_nomeEstacao]='|';
-    (d->nomeLinha)[tamanho_nomeLinha]='|';
-    tamanho_nomeEstacao++;
-    tamanho_nomeLinha++;
-    d->tamanhoRegistro=32+ tamanho_nomeEstacao + tamanho_nomeLinha;
 
-    if(flag==0){
-        int num_lixo;
-        fwrite(&(d->removido),sizeof(char),1,file);
-        fread(&num_lixo,sizeof(int),1,file);
-        fwrite(&(d->proxLista),sizeof(long int),1,file);
-
-        fwrite(&(d->codEstacao),sizeof(int),1,file);
-        fwrite(&(d->codLinha),sizeof(int),1,file);    
-        fwrite(&(d->codProxEstacao),sizeof(int),1,file);    
-        fwrite(&(d->distProxEstacao),sizeof(int),1,file);    
-        fwrite(&(d->codLinhaIntegra),sizeof(int),1,file);    
-        fwrite(&(d->codEstIntegra),sizeof(int),1,file);
-        num_lixo= num_lixo- d->tamanhoRegistro;
-        
-        fwrite(d->nomeEstacao,sizeof(char),tamanho_nomeEstacao,file);
-        fwrite(d->nomeLinha,sizeof(char),tamanho_nomeLinha,file);
-        fill_trash(file,num_lixo); }
-    else{
-        fwrite(&(d->removido),sizeof(char),1,file);
-        fwrite(&(d->tamanhoRegistro),sizeof(int),1,file);
-        fwrite(&(d->proxLista),sizeof(long int),1,file);
-        fwrite(&(d->codEstacao),sizeof(int),1,file);
-        fwrite(&(d->codLinha),sizeof(int),1,file);    
-        fwrite(&(d->codProxEstacao),sizeof(int),1,file);    
-        fwrite(&(d->distProxEstacao),sizeof(int),1,file);    
-        fwrite(&(d->codLinhaIntegra),sizeof(int),1,file);    
-        fwrite(&(d->codEstIntegra),sizeof(int),1,file);       
-        fwrite(d->nomeEstacao,sizeof(char),tamanho_nomeEstacao,file);
-        fwrite(d->nomeLinha,sizeof(char),tamanho_nomeLinha,file);
-        
-    }
-
-}
 
 
 
@@ -516,7 +506,5 @@ void imprimet(FILE* file){
     Dados* r = (Dados*) malloc(sizeof(Dados));
     while(pegaRegistro2(r,file)!=0){
             //if (status==-1) continue;
-            imprimeRegistro2(r);           
-            
-            }
+            imprimeRegistro2(r);}
     free(r);}
