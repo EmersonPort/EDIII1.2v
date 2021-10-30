@@ -125,13 +125,14 @@ void aplicacao1(FILE* file1,FILE* file2){
     fwrite(&(ca.topoLista),sizeof(long int),1,file2);
     fwrite(&(ca.nroEstacoes),sizeof(int),1,file2);
     fwrite(&(ca.nroParesEstacao),sizeof(int),1,file2);
-    short int vestacoes[1000]={0};// armazena os numEstacoes setados
+    char nomesEstacoes[500][40];
+    //short int vestacoes[1000]={0};// armazena os numEstacoes setados
     char c;// carac. que eh usado para pegar o \n
     while(getint(&(d->codEstacao),file1)==1){// enquanto tiver leitura
         //printf("%d\n",d->codEstacao);
-        if(vestacoes[d->codEstacao]==0){// se essa estacao n estiver setada , ela fica
+        /*if(vestacoes[d->codEstacao]==0){// se essa estacao n estiver setada , ela fica
             vestacoes[d->codEstacao]=1;
-            ca.nroEstacoes++;}// +estacoes , pois ha uma estacao nova
+            ca.nroEstacoes++;}// +estacoes , pois ha uma estacao nova*/
         getstr(file1,d->nomeEstacao);
         getint(&(d->codLinha),file1);
         //printf("%d\n",d->codLinha);
@@ -144,9 +145,14 @@ void aplicacao1(FILE* file1,FILE* file2){
         //printf("%d\n",d->codLinhaIntegra);
         getint(&(d->codEstIntegra),file1);
         //printf("%d\n",d->codEstIntegra);
-        fread(&c,sizeof(char),1,file1);
+        fread(&c,sizeof(char),1,file1);// pega o \n
         if(d->codProxEstacao!=-1) ca.nroParesEstacao++;
-        insereg(file2,d,1);}//insere registro sem limitacao de espaco}
+        int j=0;
+        for(;j<ca.nroEstacoes;j++) if(strcmp(d->nomeEstacao,nomesEstacoes[j])==0) break;
+        if(j==ca.nroEstacoes) {
+            strcpy(nomesEstacoes[j],d->nomeEstacao);
+            ca.nroEstacoes++;}
+        insereg(file2,d,1);}//insere registro sem limitacao de espaco
 
     fseek(file2,0,SEEK_SET);//voltamos para atualizar o cabecalho 
     ca.status='0';
