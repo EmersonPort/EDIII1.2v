@@ -151,8 +151,8 @@ int pegaRegistro(Dados* d,FILE* file){
     fread(string,sizeof(char),d->tamanhoRegistro-32,file);
     sub=strtok(string,"|");
     strcpy(d->nomeEstacao,sub);
-    sub=strtok(NULL,"|");
-    strcpy(d->nomeLinha,sub);
+    if(sub==NULL) strcpy(d->nomeLinha,"");
+    else{strcpy(d->nomeLinha,sub);} 
     return 1;
 
 }
@@ -334,28 +334,46 @@ void aplicacao4(FILE* file){
 }
 
 
-void insereg(FILE* file,Dados* d){
-    int num_lixo;
-    fwrite(&(d->removido),sizeof(char),1,file);
-    fread(&num_lixo,sizeof(int),1,file);
-    fwrite(&(d->proxLista),sizeof(long int),1,file);
-    
-    fwrite(&(d->codEstacao),sizeof(int),1,file);
-    fwrite(&(d->codLinha),sizeof(int),1,file);    
-    fwrite(&(d->codProxEstacao),sizeof(int),1,file);    
-    fwrite(&(d->distProxEstacao),sizeof(int),1,file);    
-    fwrite(&(d->codLinhaIntegra),sizeof(int),1,file);    
-    fwrite(&(d->codEstIntegra),sizeof(int),1,file);
-    num_lixo= num_lixo- d->tamanhoRegistro;
+void insereg(FILE* file,Dados* d,int flag){
     long int tamanho_nomeEstacao =strlen(d->nomeEstacao);
     long int tamanho_nomeLinha =strlen(d->nomeLinha);
     (d->nomeEstacao)[tamanho_nomeEstacao]='|';
-    tamanho_nomeEstacao++;
     (d->nomeLinha)[tamanho_nomeLinha]='|';
+    tamanho_nomeEstacao++;
     tamanho_nomeLinha++;
-    fwrite(d->nomeEstacao,sizeof(char),tamanho_nomeEstacao,file);
-    fwrite(d->nomeLinha,sizeof(char),tamanho_nomeLinha,file);
-    fill_trash(file,num_lixo);  
+    d->tamanhoRegistro=32+ tamanho_nomeEstacao + tamanho_nomeLinha;
+
+    if(flag==0){
+        int num_lixo;
+        fwrite(&(d->removido),sizeof(char),1,file);
+        fread(&num_lixo,sizeof(int),1,file);
+        fwrite(&(d->proxLista),sizeof(long int),1,file);
+
+        fwrite(&(d->codEstacao),sizeof(int),1,file);
+        fwrite(&(d->codLinha),sizeof(int),1,file);    
+        fwrite(&(d->codProxEstacao),sizeof(int),1,file);    
+        fwrite(&(d->distProxEstacao),sizeof(int),1,file);    
+        fwrite(&(d->codLinhaIntegra),sizeof(int),1,file);    
+        fwrite(&(d->codEstIntegra),sizeof(int),1,file);
+        num_lixo= num_lixo- d->tamanhoRegistro;
+        
+        fwrite(d->nomeEstacao,sizeof(char),tamanho_nomeEstacao,file);
+        fwrite(d->nomeLinha,sizeof(char),tamanho_nomeLinha,file);
+        fill_trash(file,num_lixo); }
+    else{
+        fwrite(&(d->removido),sizeof(char),1,file);
+        fwrite(&(d->tamanhoRegistro),sizeof(int),1,file);
+        fwrite(&(d->proxLista),sizeof(long int),1,file);
+        fwrite(&(d->codEstacao),sizeof(int),1,file);
+        fwrite(&(d->codLinha),sizeof(int),1,file);    
+        fwrite(&(d->codProxEstacao),sizeof(int),1,file);    
+        fwrite(&(d->distProxEstacao),sizeof(int),1,file);    
+        fwrite(&(d->codLinhaIntegra),sizeof(int),1,file);    
+        fwrite(&(d->codEstIntegra),sizeof(int),1,file);       
+        fwrite(d->nomeEstacao,sizeof(char),tamanho_nomeEstacao,file);
+        fwrite(d->nomeLinha,sizeof(char),tamanho_nomeLinha,file);
+        
+    }
 
 }
 
@@ -370,7 +388,7 @@ void firstfit(FILE* file,Dados* d,long int* topolista){
     while(1){
         if(bts_prox==-1){
             fseek(file,0,SEEK_END);
-            insereg(file,d);
+            insereg(file,d,1);
             break;}
 
         fseek(file,bts_prox,SEEK_SET);
@@ -388,8 +406,9 @@ void firstfit(FILE* file,Dados* d,long int* topolista){
                 fwrite(&(bts_prox),sizeof(long int),1,file);}
 
             fseek(file,bts_atual,SEEK_SET);
-            insereg(file,d);
+            insereg(file,d,0);
             break;}}}
+
 
 
 void aplicacao5(FILE* file){
@@ -410,13 +429,11 @@ void aplicacao5(FILE* file){
     scan_quote_string(d->nomeEstacao);
     scanf("%i ",&(d->codLinha));
     scan_quote_string(d->nomeLinha);
+    d->nomeLinha[0]='\0';
     scanf("%i ",&(d->codProxEstacao)); 
     scanf("%i ",&(d->distProxEstacao));
     scanf("%i ",&(d->codLinhaIntegra));
     scanf("%i ",&(d->codEstIntegra));
-    long int tamanho_nomeEstacao =strlen(d->nomeEstacao)+1;
-    long int tamanho_nomeLinha =strlen(d->nomeLinha)+1;
-    d->tamanhoRegistro=32+ tamanho_nomeEstacao + tamanho_nomeLinha;
 
     firstfit(file,d,&(ca.topoLista));
     ca.nroEstacoes++;}
@@ -462,7 +479,8 @@ int pegaRegistro2(Dados* d,FILE* file){
     sub=strtok(string,"|");
     strcpy(d->nomeEstacao,sub);
     sub=strtok(NULL,"|");
-    strcpy(d->nomeLinha,sub);
+    if(sub==NULL) strcpy(d->nomeLinha,"");
+    else{strcpy(d->nomeLinha,sub);}    
     return 1;
 
 }
