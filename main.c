@@ -59,9 +59,16 @@ int main(){
         
         break;
 
+    case 8:
+        scanf(" %ms",&nfile2);
+        erronatela(file1,nfile2);
+        fclose(file1);
+        break;
+
     case 9:
         imprimet(file1);
         fclose(file1);
+        break;
     }
 
 return 0;

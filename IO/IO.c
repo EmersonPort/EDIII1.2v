@@ -106,7 +106,15 @@ void insereg(FILE* file,Dados* d,int flag){// insere um registro
 
 }
 
+void limpad(Dados* d){
+    d->codLinha=-1;
+    strcpy(d->nomeLinha,"");
+    d->codProxEstacao=-1;
+    d->distProxEstacao=-1;
+    d->codLinhaIntegra=-1;
+    d->codEstIntegra=-1;
 
+}
 
 
 
@@ -116,8 +124,9 @@ void aplicacao1(FILE* file1,FILE* file2){
     Dados* d = (Dados*) malloc(sizeof(Dados));// d armazena o registro q sera lido e armazenado
     d->removido='0';
     d->proxLista=-1;
+    limpad(d);
     Cabecalho ca; 
-    ca.status='1';
+    ca.status='0';
     ca.topoLista=-1;
     ca.nroEstacoes=0;
     ca.nroParesEstacao=0;
@@ -152,10 +161,11 @@ void aplicacao1(FILE* file1,FILE* file2){
         if(j==ca.nroEstacoes) {
             strcpy(nomesEstacoes[j],d->nomeEstacao);
             ca.nroEstacoes++;}
-        insereg(file2,d,1);}//insere registro sem limitacao de espaco
+        insereg(file2,d,1);//insere registro sem limitacao de espaco
+        limpad(d);}
 
     fseek(file2,0,SEEK_SET);//voltamos para atualizar o cabecalho 
-    ca.status='0';
+    ca.status='1';
     fwrite(&(ca.status),sizeof(char),1,file2);
     fwrite(&(ca.topoLista),sizeof(long int),1,file2);
     fwrite(&(ca.nroEstacoes),sizeof(int),1,file2);
@@ -498,7 +508,7 @@ void imprimeRegistro2(Dados* d){
         printint(d->distProxEstacao);
         printint(d->codLinhaIntegra);
         printint(d->codEstIntegra);
-        printf("\n");
+        
 
 }
 
@@ -510,7 +520,46 @@ void imprimet(FILE* file){
     fread(&(ca.nroParesEstacao),sizeof(int),1,file);
     printf("%c\t\t%ld\t\t%d\t\t%d\n\n",ca.status,ca.topoLista,ca.nroEstacoes,ca.nroParesEstacao);
     Dados* r = (Dados*) malloc(sizeof(Dados));
+    int i=1;
     while(pegaRegistro2(r,file)!=0){
             //if (status==-1) continue;
-            imprimeRegistro2(r);}
+            imprimeRegistro2(r);
+            printf(" Posição: %d\n",i);
+            i++;}
     free(r);}
+
+
+
+
+    void erronatela(FILE* f1,char *str2){
+        long int t1,t2,erro;
+        char c1;
+        char c2;
+        int pipes=0;
+        int v1,v2;
+        FILE* f2 = fopen(str2,"rb");
+             
+        fseek(f1, 0, SEEK_END);
+	    t1 = ftell(f1);
+        fseek(f2, 0, SEEK_END);
+	    t2 = ftell(f2);
+        fseek(f1, 0, SEEK_SET);
+        fseek(f2, 0, SEEK_SET);
+        for (int i=0;i<t1 && i<t2;i++){
+            fread(&c1,1,1,f1);
+            fread(&c2,1,1,f2);
+            if(c1=='|') pipes++;
+            if(c1!=c2){
+                erro=ftell(f1)-1;
+                printf("%c\t%c\t\t%li\n",c1,c2,erro);
+                fseek(f1,-1,SEEK_CUR);
+                fseek(f2,-1,SEEK_CUR);
+                fread(&v1,4,1,f1);
+                fread(&v2,4,1,f2);
+                printf("Pipes: %d \n%d\t%d\n",pipes,v1,v2);
+
+                break;}
+
+        }
+        fclose(f2);
+    }
