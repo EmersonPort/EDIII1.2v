@@ -151,6 +151,7 @@ int pegaRegistro(Dados* d,FILE* file){
     fread(string,sizeof(char),d->tamanhoRegistro-32,file);
     sub=strtok(string,"|");
     strcpy(d->nomeEstacao,sub);
+    sub=strtok(NULL,"|");
     if(sub==NULL) strcpy(d->nomeLinha,"");
     else{strcpy(d->nomeLinha,sub);} 
     return 1;
@@ -429,7 +430,7 @@ void aplicacao5(FILE* file){
     scan_quote_string(d->nomeEstacao);
     scanf("%i ",&(d->codLinha));
     scan_quote_string(d->nomeLinha);
-    d->nomeLinha[0]='\0';
+    //d->nomeLinha[0]='\0';
     scanf("%i ",&(d->codProxEstacao)); 
     scanf("%i ",&(d->distProxEstacao));
     scanf("%i ",&(d->codLinhaIntegra));
