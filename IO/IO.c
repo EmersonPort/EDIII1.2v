@@ -329,7 +329,8 @@ void aplicacao4(FILE* file){
     fread(&(ca.topoLista),sizeof(long int),1,file);
     fread(&(ca.nroEstacoes),sizeof(int),1,file);
     fread(&(ca.nroParesEstacao),sizeof(int),1,file);
-    short int Matestacoes[500][500]={0};
+    char nomesEstacoes[500][40];
+    ca.nroEstacoes=0;
     
     for(int i=0;i<n;i++){
         if(i>0) fseek(file,17,SEEK_SET);
@@ -340,11 +341,16 @@ void aplicacao4(FILE* file){
         while((status=pegaRegistro(r,file))!=0){
             if (status==-1) continue;
             if (compativel(r,d)!=1){
-                if(r->codProxEstacao==-1)Matestacoes[r->codEstacao][0]=1;
-                else {Matestacoes[r->codEstacao][r->codProxEstacao]=1;}
+                if(i==n-1){
+                    int k=0;
+                    for(;k<ca.nroEstacoes;k++) if(strcmp(nomesEstacoes[k],r->nomeEstacao)==0)break;
+                    if(k==ca.nroEstacoes){ 
+                        strcpy(nomesEstacoes[k],r->nomeEstacao);
+                        ca.nroEstacoes++;}
+                }             
                 continue;
             } 
-            ca.nroEstacoes--;
+            if(r->codProxEstacao!=-1) ca.nroParesEstacao--;
             r->removido='1';
             r->proxLista=ca.topoLista;
             //if(r->codProxEstacao!=-1) ca.nroParesEstacao--;
@@ -354,9 +360,9 @@ void aplicacao4(FILE* file){
             //printf("%d %ld\n",r->tamanhoRegistro,ftell(file));
             //printf("%c %d %ld",r->removido,r->tamanhoRegistro,r->proxLista);
             //printf("%ld\n",ca.topoLista);
-            fread(&(r->removido),sizeof(char),1,file);
-            fread(&(r->tamanhoRegistro),sizeof(int),1,file);
-            fread(&(r->proxLista),sizeof(long int),1,file);
+            fwrite(&(r->removido),sizeof(char),1,file);
+            fwrite(&(r->tamanhoRegistro),sizeof(int),1,file);
+            fwrite(&(r->proxLista),sizeof(long int),1,file);
             //printf("\t\t%c %d %ld\n",r->removido,r->tamanhoRegistro,r->proxLista);
             fseek(file,r->tamanhoRegistro-8,SEEK_CUR);}}
 
@@ -364,13 +370,13 @@ void aplicacao4(FILE* file){
     free(d);
     free(r);
     //ca.nroEstacoes=0;
-    ca.nroParesEstacao=0;
+    /*ca.nroParesEstacao=0;
     for(int i=0;i<500;i++){
         int somadepares=0;
         for(int j=1;j<500;j++){
             somadepares+=Matestacoes[i][j];}
         ca.nroParesEstacao+=somadepares;
-        somadepares+=Matestacoes[i][0];}
+        somadepares+=Matestacoes[i][0];}*/
         //if(somadepares>0) ca.nroEstacoes++;}
     fseek(file,0,SEEK_SET);
     fwrite(&(ca.status),sizeof(char),1,file);
