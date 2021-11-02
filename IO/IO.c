@@ -73,9 +73,9 @@ void insereg(FILE* file,Dados* d,int flag){// insere um registro
     d->tamanhoRegistro=32+ tamanho_nomeEstacao + tamanho_nomeLinha;// 32= 6*4 +8 : (todos os outros ints depois do campo tamanhoRegistr) + (campo proxLista)
 
     if(flag==0){// flag==0 -> ha limitacao de tamanho
-        int num_lixo;
+        int espaco;
         fwrite(&(d->removido),sizeof(char),1,file);
-        fread(&num_lixo,sizeof(int),1,file);
+        fread(&espaco,sizeof(int),1,file);
         fwrite(&(d->proxLista),sizeof(long int),1,file);
 
         fwrite(&(d->codEstacao),sizeof(int),1,file);
@@ -84,11 +84,11 @@ void insereg(FILE* file,Dados* d,int flag){// insere um registro
         fwrite(&(d->distProxEstacao),sizeof(int),1,file);    
         fwrite(&(d->codLinhaIntegra),sizeof(int),1,file);    
         fwrite(&(d->codEstIntegra),sizeof(int),1,file);
-        num_lixo= num_lixo- d->tamanhoRegistro;
+        espaco= espaco- d->tamanhoRegistro;
         
         fwrite(d->nomeEstacao,sizeof(char),tamanho_nomeEstacao,file);
         fwrite(d->nomeLinha,sizeof(char),tamanho_nomeLinha,file);
-        fill_trash(file,num_lixo); }
+        fill_trash(file,espaco); }
     else{// flag==1 -> n ha limitacao de tamanho
         fwrite(&(d->removido),sizeof(char),1,file);
         fwrite(&(d->tamanhoRegistro),sizeof(int),1,file);
@@ -103,7 +103,6 @@ void insereg(FILE* file,Dados* d,int flag){// insere um registro
         fwrite(d->nomeLinha,sizeof(char),tamanho_nomeLinha,file);
         
     }
-
 }
 
 void limpad(Dados* d){
@@ -402,7 +401,8 @@ void firstfit(FILE* file,Dados* d,long int* topolista){
         if(bts_prox==-1){
             fseek(file,0,SEEK_END);
             insereg(file,d,1);
-            break;}
+            free(r);
+            return;}
 
         fseek(file,bts_prox,SEEK_SET);
         fread(&(r->removido),sizeof(char),1,file);
@@ -420,17 +420,60 @@ void firstfit(FILE* file,Dados* d,long int* topolista){
 
             fseek(file,bts_atual,SEEK_SET);
             insereg(file,d,0);
-            break;}}}
+            free(r);
+            return;}}}
 
+
+int intteclado(FILE* file){
+    char c;
+    int soma=0;
+    scanf(" %c",&c);
+    if(c=='N' || c=='n') {
+        getchar();
+        getchar();
+        getchar();
+        return -1;}
+    soma= (int) (c - '0');
+    while(c=getchar(),c!=' ' && c!='\r' && c!='\n'){
+        soma= soma*10;
+        soma += (int) (c - '0');}
+    return soma;
+
+}
+
+
+void atualiza_ca(FILE* file,Cabecalho* pca){
+    fseek(file,17,SEEK_SET);
+    pca->nroEstacoes=0;
+    pca->nroParesEstacao=0;
+    char nomesEstacoes[500][40];
+    char pares[500][500]={0};
+    Dados* d = (Dados*) malloc(sizeof(Dados));
+    int status;
+        while((status=pegaRegistro(d,file))!=0){
+            if (status==-1) continue;
+            int i=0;
+            for(;i<pca->nroEstacoes;i++) if(strcmp(nomesEstacoes[i],d->nomeEstacao)==0) break;
+            if(i==pca->nroEstacoes) {
+                strcpy(nomesEstacoes[i],d->nomeEstacao);
+                pca->nroEstacoes++;}
+            if(d->codProxEstacao!=-1 && pares[d->codEstacao][d->codProxEstacao]!='1') {
+                    pares[d->codEstacao][d->codProxEstacao]='1';
+                    pca->nroParesEstacao++;}        
+            }
+    fseek(file,0,SEEK_SET);
+    fwrite(&(pca->status),sizeof(char),1,file);
+    fwrite(&(pca->topoLista),sizeof(long int),1,file);
+    fwrite(&(pca->nroEstacoes),sizeof(int),1,file);
+    fwrite(&(pca->nroParesEstacao),sizeof(int),1,file);
+    free(d);}
 
 
 void aplicacao5(FILE* file){
     int n;
-    int x;
     scanf("%i\n",&n);
     Cabecalho ca;
     fread(&(ca.status),sizeof(char),1,file);
-    //printf("%ld\n",ftell(file));
     fread(&(ca.topoLista),sizeof(long int),1,file);
     fread(&(ca.nroEstacoes),sizeof(int),1,file);
     fread(&(ca.nroParesEstacao),sizeof(int),1,file);
@@ -438,29 +481,79 @@ void aplicacao5(FILE* file){
     d->removido='0';
     d->proxLista=-1;
     for(int i=0;i<n;i++) {
-    scanf("%i ",&(d->codEstacao));
+    d->codEstacao=intteclado(file);
     scan_quote_string(d->nomeEstacao);
-    scanf("%i ",&(d->codLinha));
+    d->codLinha=intteclado(file);
     scan_quote_string(d->nomeLinha);
-    //d->nomeLinha[0]='\0';
-    scanf("%i ",&(d->codProxEstacao)); 
-    scanf("%i ",&(d->distProxEstacao));
-    scanf("%i ",&(d->codLinhaIntegra));
-    scanf("%i ",&(d->codEstIntegra));
-
-    firstfit(file,d,&(ca.topoLista));
-    ca.nroEstacoes++;}
-    fseek(file,0,SEEK_SET);
-    fwrite(&(ca.status),sizeof(char),1,file);
-    fwrite(&(ca.topoLista),sizeof(long int),1,file);
-    fwrite(&(ca.nroEstacoes),sizeof(int),1,file);
-    fwrite(&(ca.nroParesEstacao),sizeof(int),1,file);}
+    d->tamanhoRegistro=34+ strlen(d->nomeEstacao) + strlen(d->nomeLinha);
+    d->codProxEstacao=intteclado(file);
+    d->distProxEstacao=intteclado(file);
+    d->codLinhaIntegra=intteclado(file);
+    d->codEstIntegra=intteclado(file);
+    if(i!=n-1) while(getchar()!='\n');
+    firstfit(file,d,&(ca.topoLista));}
+    atualiza_ca(file,&ca);    
+    free(d);}
 
 
 
 
 
-
+void aplicacao6(FILE* file){
+    int n;
+    int x;
+    int y;
+    scanf("%i\n",&n);
+    Cabecalho ca;
+    fread(&(ca.status),sizeof(char),1,file);
+    fread(&(ca.topoLista),sizeof(long int),1,file);
+    fread(&(ca.nroEstacoes),sizeof(int),1,file);
+    fread(&(ca.nroParesEstacao),sizeof(int),1,file);
+    Dados* buscado = (Dados*) malloc(sizeof(Dados));
+    Dados* atualizado = (Dados*) malloc(sizeof(Dados));
+    Dados* r = (Dados*) malloc(sizeof(Dados));
+    for(int i=0;i<n;i++) {
+        if(i>0) fseek(file,17,SEEK_SET);
+        generalize(buscado);
+        scanf("%i ",&x);
+        for(int j=0;j<x;j++) restrinja(buscado);
+        generalize(atualizado);
+        scanf("%i ",&y);
+        for(int j=0;j<y;j++) restrinja(atualizado);
+        int status;
+        while((status=pegaRegistro(r,file))!=0){
+            if (status==-1) continue;
+            if (compativel(r,buscado)!=1) continue;
+            if(atualizado->codEstacao!=-2) r->codEstacao=atualizado->codEstacao;
+            if(atualizado->codLinha!=-2) r->codLinha=atualizado->codLinha;
+            if(atualizado->codProxEstacao!=-2) r->codProxEstacao=atualizado->codProxEstacao;
+            if(atualizado->distProxEstacao!=-2) r->distProxEstacao=atualizado->distProxEstacao;
+            if(atualizado->codLinhaIntegra!=-2) r->codLinhaIntegra= atualizado->codLinhaIntegra;
+            if(atualizado->codEstIntegra!=-2) r->codEstIntegra=atualizado->codEstIntegra;
+            if(strcmp(atualizado->nomeEstacao,"Sem restrição")!=0) strcpy(r->nomeEstacao,atualizado->nomeEstacao);
+            if(strcmp(atualizado->nomeLinha,"Sem restrição")!=0) strcpy(r->nomeLinha,atualizado->nomeLinha);
+            int tamanho_atualizado= 34+ strlen(r->nomeEstacao)+ strlen(r->nomeLinha);
+            imprimeRegistro(r);
+            if(tamanho_atualizado<=r->tamanhoRegistro){
+                fseek(file,-r->tamanhoRegistro-5,SEEK_CUR);
+                insereg(file,r,0);}             
+            else{
+                r->removido='1';
+                r->proxLista=ca.topoLista;
+                long int fim_regis=ftell(file);
+                ca.topoLista = fim_regis-r->tamanhoRegistro -5;
+                fseek(file,ca.topoLista,SEEK_SET);
+                fwrite(&(r->removido),sizeof(char),1,file);
+                fwrite(&(r->tamanhoRegistro),sizeof(int),1,file);
+                fwrite(&(r->proxLista),sizeof(long int),1,file);
+                r->removido='0';
+                r->proxLista=-1;
+                firstfit(file,r,&(ca.topoLista));
+                fseek(file,fim_regis,SEEK_SET);}}}
+    free(buscado);
+    free(atualizado);
+    free(r);
+    atualiza_ca(file,&ca);}
 
 
 

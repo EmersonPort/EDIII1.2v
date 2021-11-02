@@ -13,6 +13,7 @@ void aplicacao2(FILE* file);
 void aplicacao3(FILE* file);
 void aplicacao4(FILE* file);
 void aplicacao5(FILE* file);
+void aplicacao6(FILE* file);
 void erronatela(FILE* f1,char *str2);
 void imprimet(FILE* file);
 #endif

@@ -59,6 +59,13 @@ int main(){
         
         break;
 
+    case 6:
+        aplicacao6(file1);
+        fclose(file1);
+        binarioNaTela(nfile1);
+        
+        break;
+
     case 8:
         scanf(" %ms",&nfile2);
         erronatela(file1,nfile2);
