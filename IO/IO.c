@@ -533,7 +533,7 @@ void aplicacao6(FILE* file){
             if(strcmp(atualizado->nomeEstacao,"Sem restrição")!=0) strcpy(r->nomeEstacao,atualizado->nomeEstacao);
             if(strcmp(atualizado->nomeLinha,"Sem restrição")!=0) strcpy(r->nomeLinha,atualizado->nomeLinha);
             int tamanho_atualizado= 34+ strlen(r->nomeEstacao)+ strlen(r->nomeLinha);
-            imprimeRegistro(r);
+            //imprimeRegistro(r);
             if(tamanho_atualizado<=r->tamanhoRegistro){
                 fseek(file,-r->tamanhoRegistro-5,SEEK_CUR);
                 insereg(file,r,0);}             
@@ -548,6 +548,7 @@ void aplicacao6(FILE* file){
                 fwrite(&(r->proxLista),sizeof(long int),1,file);
                 r->removido='0';
                 r->proxLista=-1;
+                r->tamanhoRegistro=tamanho_atualizado;
                 firstfit(file,r,&(ca.topoLista));
                 fseek(file,fim_regis,SEEK_SET);}}}
     free(buscado);
