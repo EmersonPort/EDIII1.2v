@@ -25,7 +25,7 @@ int main(){
     {
     case 1:
         scanf(" %ms",&nfile2);
-        FILE *file2 = fopen(nfile2, "wb");
+        FILE *file2 = fopen(nfile2, "w+b");
         aplicacao1(file1,file2);
         fclose(file1);
         fclose(file2);
@@ -65,18 +65,9 @@ int main(){
         binarioNaTela(nfile1);
         
         break;
-
-    case 8:
-        scanf(" %ms",&nfile2);
-        erronatela(file1,nfile2);
-        fclose(file1);
-        break;
-
-    case 9:
-        imprimet(file1);
-        fclose(file1);
-        break;
-    }
+    default:
+    	printf("Falha no processamento do arquivo.\n");    	
+        
 
 return 0;
-}
+}}
